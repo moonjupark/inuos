@@ -41,5 +41,64 @@ int elfDebug = 0;
  */
 int Parse_ELF_Executable(char *exeFileData, ulong_t exeFileLength,
                          struct Exe_Format *exeFormat) {
-	TODO("Parse an ELF executable image");
+    elfHeader *hdr;
+    programHeader *phdr;
+    int i;
+
+    hdr = (elfHeader *) exeFileData;
+
+    /*
+     * FIXME: when checking offsets, we really ought to be
+     * checking overflow cases.  Need to use functions from
+     * range.h (which needs to be implemented, too)
+     */
+
+    if(exeFileLength < sizeof(elfHeader) ||
+       strncmp(exeFileData, "\x7F" "ELF", 4) != 0) {
+        if(elfDebug)
+            Print("Not an ELF executable\n");
+        return ENOEXEC;
+    }
+
+    if(hdr->phnum > EXE_MAX_SEGMENTS) {
+        if(elfDebug)
+            Print("Too many segments (%d) in ELF executable\n",
+                  hdr->phnum);
+        return ENOEXEC;
+    }
+
+    if(exeFileLength < hdr->phoff + (hdr->phnum * sizeof(programHeader))) {
+        if(elfDebug)
+            Print("Not enough room for program header\n");
+        return ENOEXEC;
+    }
+
+    exeFormat->numSegments = hdr->phnum;
+    exeFormat->entryAddr = hdr->entry;
+
+    phdr = (programHeader *) (exeFileData + hdr->phoff);
+    for(i = 0; i < hdr->phnum; ++i) {
+        struct Exe_Segment *segment = &exeFormat->segmentList[i];
+
+        /*
+         * Fill in segment offset, length, address
+         * FIXME: should check that segments are valid
+         */
+        segment->offsetInFile = phdr[i].offset;
+        segment->lengthInFile = phdr[i].fileSize;
+        segment->startAddress = phdr[i].vaddr;
+        segment->sizeInMemory = phdr[i].memSize;
+
+        if(segment->lengthInFile > segment->sizeInMemory) {
+            if(elfDebug)
+                Print
+                    ("Segment %d: length in file (%lu) exceeds size in memory (%lu)\n",
+                     i, segment->lengthInFile, segment->sizeInMemory);
+            return ENOEXEC;
+        }
+
+    }
+
+    /* Groovy */
+    return 0;
 }

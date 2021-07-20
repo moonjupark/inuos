@@ -202,7 +202,7 @@ static void Mount_Root_Filesystem(void) {
 
 
 
-void Spawner();
+//void Spawner();
 
 static void Spawn_Init_Process(void) {
     int rc=0;
@@ -210,8 +210,8 @@ static void Spawn_Init_Process(void) {
 
     /* Load and run a.exe, the "init" process */
     Print("Spawning init process (%s)\n", INIT_PROGRAM);
-//    rc = Spawn_Foreground(INIT_PROGRAM, INIT_PROGRAM, &initProcess);
-    initProcess=Start_Kernel_Thread(Spawner, 0, PRIORITY_NORMAL, true, "prj1");
+    rc = Spawn_Foreground(INIT_PROGRAM, INIT_PROGRAM, &initProcess);
+//    initProcess=Start_Kernel_Thread(Spawner, 0, PRIORITY_NORMAL, true, "prj1");
     // Print("... spawned\n");
 
     if(rc != 0) {
